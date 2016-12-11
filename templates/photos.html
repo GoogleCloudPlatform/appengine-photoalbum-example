@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Photo Album</title>
+  </head>
+
+  <body>
+
+{% from "_formhelpers.html" import render_field %}
+
+<h1>Photo Album Example</h1>
+<p>Note: The latest {{ max_photos }} photos are shown.</p>
+<div>
+  <form method=post action={{ url_for('photos') }} enctype="multipart/form-data">
+    {{ render_field(tag_form.tag) }}
+  </form>
+</div>
+<hr>
+<div>
+  <form method=post action={{ url_for('post') }} enctype="multipart/form-data">
+    {{ render_field(photo_form.input_photo) }}
+    <br/>
+    <input type=submit value='Upload' name='submit'>
+  </form>
+</div>
+<hr>
+{% for photo in photos %}
+  <div>
+    {{ photo.timestamp | local_tz }}
+  </div>
+  <br/>
+  <div>
+    <img src="{{ storage_path }}/{{ photo.key.id() }}" style="max-width: 30%">
+  </div>
+  <div>
+    Tags: {% for tag in photo.tags %} [{{ tag }}] {% endfor %}
+  </div>
+  <br/>
+  <div>
+    <form method=post action={{ url_for('delete') }} enctype="multipart/form-data">
+       <input type=submit value='Delete' name='{{ photo.key.id() }}'>
+    </form>
+  </div>
+  <hr>
+{% endfor %}
+
+<script>
+document.getElementById('tag').onchange = function(){ this.form.submit() }
+</script>
+
+  </body>
+</html>

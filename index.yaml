@@ -1,0 +1,15 @@
+indexes:
+
+- kind: Photo
+  ancestor: yes
+  properties:
+  - name: timestamp
+    direction: desc
+
+- kind: Photo
+  ancestor: yes
+  properties:
+  - name: tags
+  - name: timestamp
+    direction: desc
+
