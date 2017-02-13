@@ -3,5 +3,5 @@ WTForms-Appengine==0.1
 Flask_WTF==0.13.1
 pytz==2016.7
 GoogleAppEngineCloudStorageClient==1.9.22.1
-google-cloud==0.21.0
+google-cloud==0.22.0
 protobuf==3.1.0.post1
