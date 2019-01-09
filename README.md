@@ -79,7 +79,7 @@ env_variables:
 ```shell
 $ pip install -r requirements.txt -t lib
 $ gcloud app create
-$ gcloud datastore create-indexes index.yaml
+$ gcloud datastore indexes create index.yaml
 $ gcloud app deploy
 ```
 
