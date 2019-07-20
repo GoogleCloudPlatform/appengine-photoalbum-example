@@ -46,7 +46,13 @@ In this section you will start your [Google Cloud Shell][9] and clone the
 
  ![](docs/img/cloud-shell.png)
 
-3. Clone the lab repository in your cloud shell, then `cd` into that dir:
+3. Set project ID in the session. (Specify your project ID in `[PROJECT_ID]` below.)
+
+  ```shell
+  $ gcloud config set project [PROJECT_ID]
+  ```
+  
+4. Clone the lab repository in your cloud shell, then `cd` into that dir:
 
   ```shell
   $ git clone https://github.com/GoogleCloudPlatform/appengine-photoalbum-example.git
