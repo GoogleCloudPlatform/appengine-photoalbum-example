@@ -12,3 +12,7 @@ handlers:
 env_variables:
   LANG_TAG: 'it'
   TIMESTAMP_TZ: 'Europe/Rome'
+
+libraries:
+- name: ssl
+  version: latest
