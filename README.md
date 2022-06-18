@@ -83,7 +83,7 @@ env_variables:
 ## Deploy the application
 
 ```shell
-$ pip install -r requirements.txt -t lib
+$ pip2 install -r requirements.txt -t lib
 $ gcloud app create
 $ gcloud datastore indexes create index.yaml
 $ gcloud app deploy
