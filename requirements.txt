@@ -5,4 +5,4 @@ pytz==2016.7
 GoogleAppEngineCloudStorageClient==1.9.22.1
 google-cloud==0.22.0
 grpcio==1.26.0
-Werkzeug==0.16.1
+Werkzeug==2.2.3
