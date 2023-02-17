@@ -13,15 +13,11 @@ This is an example application demonstrating how Vision API and Translation
 - [Python][2]
 
 ## APIs
-- [NDB Datastore API][3]
-- [Cloud Storage Client API][4]
 - [Vision API][5]
 - [Translation API][6]
 
 [1]: https://cloud.google.com/appengine/docs
 [2]: https://python.org
-[3]: https://cloud.google.com/appengine/docs/python/ndb/
-[4]: https://cloud.google.com/appengine/docs/python/googlecloudstorageclient/
 [5]: https://cloud.google.com/vision/
 [6]: https://cloud.google.com/translate/
 
@@ -74,8 +70,8 @@ You can replace the timezone code used for timestamps, too.
 
 ```yaml
 env_variables:
-  LANG_TAG: 'it'              <-- change to your favorite language code.
-  TIMESTAMP_TZ: 'Europe/Rome' <-- change to your favorite timezone code.
+  LANG_TAG: 'ja'              <-- change to your favorite language code.
+  TIMESTAMP_TZ: 'Asia/Tokyo'  <-- change to your favorite timezone code.
 ```
 
 [11]: https://cloud.google.com/translate/docs/languages
@@ -83,14 +79,13 @@ env_variables:
 ## Deploy the application
 
 ```shell
-$ pip2 install -r requirements.txt -t lib
 $ gcloud app create
 $ gcloud datastore indexes create index.yaml
 $ gcloud app deploy
 ```
 
 By executing these commands on the Cloud Shell, the project id is automatically
- applied to the application and the application URL will be
+ applied to the application and the application URL will be something like:
  https://\<project id\>.appspot.com.
 
 You can see Datastore's index creation status from the Cloud Console. Once
