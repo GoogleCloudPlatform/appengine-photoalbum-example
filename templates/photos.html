@@ -7,46 +7,57 @@
 
   <body>
 
-{% from "_formhelpers.html" import render_field %}
-
 <h1>Photo Album Example</h1>
 <p>Note: The latest {{ max_photos }} photos are shown.</p>
 <div>
-  <form method=post action={{ url_for('photos') }} enctype="multipart/form-data">
-    {{ render_field(tag_form.tag) }}
+	<form method=post action={{ url_for("photos") }} enctype="multipart/form-data">
+    <select id="tag" name="tag">
+      {% for tag_name in tag_choices %}
+        {% if tag_name[0] == tag %}
+          <option value="{{ tag_name[0] }}" selected>{{ tag_name[1] }}</option>
+	{% else %}
+          <option value="{{ tag_name[0] }}">{{ tag_name[1] }}</option>
+	{% endif %}
+      {% endfor %}
+    </select>
   </form>
 </div>
 <hr>
 <div>
-  <form method=post action={{ url_for('post') }} enctype="multipart/form-data">
-    {{ render_field(photo_form.input_photo) }}
-    <br/>
-    <input type=submit value='Upload' name='submit'>
+  <form method=post action={{ url_for("post") }} enctype="multipart/form-data">
+    <input type="file" name="file" accept=".jpg,.png,.gif,.jpeg">
+    <input type="submit" value="Upload" name="submit">
   </form>
 </div>
 <hr>
 {% for photo in photos %}
   <div>
-    {{ photo.timestamp | local_tz }}
+    {{ photo["timestamp"] }}
   </div>
   <br/>
   <div>
-    <img src="{{ storage_path }}/{{ photo.key.id() }}" style="max-width: 30%">
+    <img src="{{ storage_path }}/{{ photo["filename"] }}" style="max-width: 30%">
   </div>
   <div>
-    Tags: {% for tag in photo.tags %} [{{ tag }}] {% endfor %}
+    Tags: {% for tag in photo["tags"] %} [{{ tag }}] {% endfor %}
   </div>
   <br/>
   <div>
-    <form method=post action={{ url_for('delete') }} enctype="multipart/form-data">
-       <input type=submit value='Delete' name='{{ photo.key.id() }}'>
+    <form method=post action={{ url_for("delete") }} enctype="multipart/form-data">
+      <input type="submit" value="Delete">
+      <input type="hidden" name="delete" value="{{ photo["filename"] }}">
     </form>
   </div>
   <hr>
 {% endfor %}
 
 <script>
-document.getElementById('tag').onchange = function(){ this.form.submit() }
+  function inputChange(event){
+    this.form.submit();
+    console.log(event);
+  }
+  let tag = document.getElementById('tag');
+  tag.addEventListener('change', inputChange);
 </script>
 
   </body>

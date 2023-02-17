@@ -15,99 +15,66 @@
 # limitations under the License.
 
 
-import os, uuid
+import os, uuid, datetime, pytz
 
 from flask import Flask, render_template, request, redirect, url_for
-from flask_wtf.file import FileField
-from pytz import timezone, utc
-from wtforms import Form, validators, ValidationError, SelectField
-from werkzeug.utils import secure_filename
-from werkzeug.datastructures import CombinedMultiDict
-
-import cloudstorage as gcs
-from google.appengine.api import app_identity
-from google.appengine.ext import ndb
-from google.cloud import vision, translate
+from google.cloud import vision, translate, storage, datastore
 
 
 app = Flask(__name__)
 
 MAX_PHOTOS = 20
-content_types = {'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
-                 'png': 'image/png', 'gif': 'image/gif'}
-extensions = sorted(content_types.keys())
 
-bucket_name = app_identity.get_default_gcs_bucket_name()
-storage_path = 'https://storage.cloud.google.com/%s' % bucket_name
+project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
+bucket_name = '{}.appspot.com'.format(project_id)
+storage_path = 'https://storage.cloud.google.com/{}'.format(bucket_name)
 tag_language = os.getenv('LANG_TAG', 'en')
 timestamp_tz = os.getenv('TIMESTAMP_TZ', 'US/Pacific')
 
 
-class Tags(ndb.Model):
-    timestamp = ndb.DateTimeProperty(auto_now_add=True)
-    count = ndb.IntegerProperty(required=True)
-
-    @classmethod
-    def all(cls):
-        user = ndb.Key('User', 'default')
-        return cls.query(ancestor=user)
-
-
-class Photo(ndb.Model):
-    timestamp = ndb.DateTimeProperty(auto_now_add=True)
-    tags = ndb.StringProperty(repeated=True)
-
-    @classmethod
-    def tag_filter(cls, tag):
-        user = ndb.Key('User', 'default')
-        return cls.query(ancestor=user).filter(cls.tags == tag).order(
-               -cls.timestamp)
-
-    @classmethod
-    def all(cls):
-        user = ndb.Key('User', 'default')
-        return cls.query(ancestor=user).order(-cls.timestamp)
-
-
-@app.template_filter('local_tz')
-def local_tz_filter(timestamp):
-    tz = timezone(timestamp_tz)
-    local_timestamp = utc.localize(timestamp).astimezone(tz)
-    return local_timestamp.strftime("%Y/%m/%d %H:%M:%S")
-
-
-def is_image():
-    def _is_image(form, field):
-        if not field.data:
-            raise ValidationError()
-        elif field.data.filename.split('.')[-1] not in extensions:
-            raise ValidationError()
-    return _is_image
+def get_tags():
+    tags = []
+    client = datastore.Client()
+    query = client.query(kind='Photos')
+    for e in query.fetch():
+        for tag in e.get('tags'):
+            tags.append(tag)
+    tags = set(tags)
+    return tags
 
 
 def get_labels(photo_file):
-    vision_client = vision.Client()
-    image = vision_client.image(
-                source_uri = 'gs://%s/%s' % (bucket_name, photo_file))
-    return image.detect_labels(limit=3)
+    uri = 'gs://{}/{}'.format(bucket_name, photo_file)
+    client = vision.ImageAnnotatorClient()
+    image = vision.Image()
+    image.source.image_uri = uri
+    response = client.label_detection(image=image, max_results=3)
+    return [label.description for label in response.label_annotations]
 
 
-def translate_text(text):
+def translate_text(labels):
     if tag_language == 'en':
-        return text
-    translate_client = translate.Client()
-    result = translate_client.translate(text, target_language=tag_language)
-    return result['translatedText']
+        return labels
+    client = translate.TranslationServiceClient()
+    response = client.translate_text(
+        contents=labels, target_language_code=tag_language,
+        parent='projects/{}'.format(project_id))
+    return [label.translated_text for label in response.translations]
 
 
-class PhotoForm(Form):
-    input_photo = FileField(
-        'Photo file (File extension should be: %s)' % ', '.join(extensions),
-        validators=[is_image()])
-
-
-class TagForm(Form):
-    tag = SelectField('Tag')
+def get_photos(max_photos, tag='__all__'):
+    client = datastore.Client()
+    query = client.query(kind='Photos')
+    if tag != '__all__':
+        query.add_filter('tags', '=', tag)
+    query.order = '-timestamp'
+    photos = []
+    for photo in query.fetch(limit=max_photos):
+        ts = photo['timestamp'].astimezone(pytz.timezone(timestamp_tz))
+        timestamp = datetime.datetime.strftime(ts, '%Y-%m-%d %H:%M:%S %Z')
+        photo['timestamp'] = timestamp
+        photos.append(photo)
+    return photos
 
 
 @app.route('/')
@@ -119,73 +86,71 @@ def index():
 def photos():
     tag = '__all__'
     if request.method == 'POST':
-        tag = request.form['tag']
-    if tag == '__all__':
-        photos = Photo.all().fetch(MAX_PHOTOS)
-    else:
-        photos = Photo.tag_filter(tag).fetch(MAX_PHOTOS)
+        tag = request.form.get('tag')
+    photos = get_photos(MAX_PHOTOS, tag=tag)
 
-    photo_form = PhotoForm(request.form)
-    tag_form = TagForm(request.form, select=tag)
-    choices = [('__all__', 'Show All')]
-    for tag in Tags.all().fetch():
-        tag_id = unicode(tag.key.id(), 'utf8')
-        choices.append((tag_id, tag_id))
-    tag_form.tag.choices = choices
+    tag_choices = [('__all__', 'Show All')]
+    for tag_name in get_tags():
+        tag_choices.append((tag_name, tag_name))
 
     return render_template('photos.html', storage_path=storage_path,
-                           photo_form=photo_form, tag_form=tag_form,
-                           photos=photos, max_photos=MAX_PHOTOS)
+                           tag_choices=tag_choices, photos=photos,
+                           max_photos=MAX_PHOTOS, tag=tag)
 
 
 @app.route('/delete', methods=['POST'])
 def delete():
-    filename = request.form.keys()[0]
-    photo = ndb.Key('User', 'default', 'Photo', filename).get()
-    for tag in photo.tags:
-        entity = ndb.Key('User', 'default', 'Tags', tag).get()
-        if entity:
-            entity.count -= 1
-            if entity.count == 0:
-                entity.key.delete()
-            else:
-                entity.put()
-    photo.key.delete()
-    gcs.delete('/%s/%s' % (bucket_name, filename))
+    filename = request.form.get('delete')
+
+    client = datastore.Client()
+    query = client.query(kind='Photos')
+    query.add_filter('filename', '=', filename)
+    for entity in query.fetch():
+        client.delete(entity.key)
+
+    bucket = storage.Client().bucket(bucket_name)
+    blob = bucket.blob(filename)
+    blob.delete()
+
     return redirect(url_for('photos'))
 
 
 @app.route('/post', methods=['POST'])
 def post():
-    form = PhotoForm(CombinedMultiDict((request.files, request.form)))
-    if request.method == 'POST' and form.validate():
-        filename = '%s.%s' % (str(uuid.uuid4()),
-                              secure_filename(form.input_photo.data.filename))
-        content_type = content_types[filename.split('.')[-1]]
-        write_retry_params = gcs.RetryParams(backoff_factor=1.1)
-        gcs_file = gcs.open('/%s/%s' % (bucket_name, filename), 'w',
-                            retry_params=write_retry_params,
-                            content_type=content_type,
-                            options={'x-goog-acl': 'authenticated-read'})
-        for _ in form.input_photo.data.stream:
-            gcs_file.write(_)
-        gcs_file.close()
-
-        labels = get_labels(filename)
-        tags = [translate_text(label.description) for label in labels]
-        entity = Photo(id=filename, tags=tags,
-                       parent=ndb.Key('User', 'default'))
-        entity.put()
-
-        for tag in tags:
-            entity = ndb.Key('User', 'default', 'Tags', tag).get()
-            if entity:
-                entity.count += 1
-            else:
-                entity = Tags(count=1, id=tag,
-                              parent=ndb.Key('User', 'default'))
-            entity.put()
-        return render_template('post.html', storage_path=storage_path,
-                               filename=filename, tags=tags)
-    else:
+    f = request.files.getlist('file')[0]
+    if f.filename =='':
         return redirect(url_for('photos'))
+
+    local_file = '/tmp/{}'.format(f.filename)
+    target_file = str(uuid.uuid4())
+    f.save(local_file)
+
+    bucket = storage.Client().bucket(bucket_name)
+    blob = bucket.blob(target_file)
+    blob.upload_from_filename(local_file)
+    blob.acl.reload() # reload the ACL of the blob
+    acl = blob.acl
+    acl.all_authenticated().grant_read()
+    acl.save()
+    os.remove(local_file)
+
+    labels = get_labels(target_file)
+    tags = translate_text(labels)
+    ts = datetime.datetime.now().astimezone(pytz.timezone(timestamp_tz))
+
+    client = datastore.Client()
+    key = client.key('Photos')
+    entity = datastore.Entity(key=key)
+    entity['filename'] = target_file
+    entity['tags'] = tags
+    entity['timestamp'] = ts
+    client.put(entity)
+
+    timestamp=datetime.datetime.strftime(ts, '%Y-%m-%d %H:%M:%S %Z')
+    return render_template(
+            'post.html', storage_path=storage_path,
+            filename=target_file, tags=tags, timestamp=timestamp)
+
+
+if __name__ == '__main__':
+    app.run(host='127.0.0.1', port=8080, debug=True)
