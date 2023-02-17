@@ -1,6 +1,8 @@
-runtime: python27
-api_version: 1
-threadsafe: true
+runtime: python39
+
+env_variables:
+  LANG_TAG: 'ja'
+  TIMESTAMP_TZ: 'Asia/Tokyo'
 
 handlers:
 - url: /
@@ -8,11 +10,3 @@ handlers:
 - url: /.*
   script: main.app
   login: required
-
-env_variables:
-  LANG_TAG: 'it'
-  TIMESTAMP_TZ: 'Europe/Rome'
-
-libraries:
-- name: ssl
-  version: latest
