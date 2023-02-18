@@ -28,7 +28,7 @@ MAX_PHOTOS = 20
 project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
 bucket_name = '{}.appspot.com'.format(project_id)
 storage_path = 'https://storage.cloud.google.com/{}'.format(bucket_name)
-tag_language = os.getenv('LANG_TAG', 'en')
+tag_language = os.getenv('TAG_LANG', 'en')
 timestamp_tz = os.getenv('TIMESTAMP_TZ', 'US/Pacific')
 
 

@@ -1,7 +1,7 @@
 runtime: python39
 
 env_variables:
-  LANG_TAG: 'ja'
+  TAG_LANG: 'ja'
   TIMESTAMP_TZ: 'Asia/Tokyo'
 
 handlers:
