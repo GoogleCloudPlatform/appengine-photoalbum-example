@@ -1,6 +1,6 @@
 indexes:
 
-- kind: Photo
+- kind: Photos
   properties:
   - name: tags
   - name: timestamp
