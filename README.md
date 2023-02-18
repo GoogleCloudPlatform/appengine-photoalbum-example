@@ -70,7 +70,7 @@ You can replace the timezone code used for timestamps, too.
 
 ```yaml
 env_variables:
-  LANG_TAG: 'ja'              <-- change to your favorite language code.
+  TAG_LANG: 'ja'              <-- change to your favorite language code.
   TIMESTAMP_TZ: 'Asia/Tokyo'  <-- change to your favorite timezone code.
 ```
 
