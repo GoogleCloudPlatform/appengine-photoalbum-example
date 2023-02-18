@@ -10,7 +10,7 @@
 <h1>Photo Album Example</h1>
 <p>Note: The latest {{ max_photos }} photos are shown.</p>
 <div>
-	<form method=post action={{ url_for("photos") }} enctype="multipart/form-data">
+  <form method=post action={{ url_for("photos") }} enctype="multipart/form-data">
     <select id="tag" name="tag">
       {% for tag_name in tag_choices %}
         {% if tag_name[0] == tag %}
