@@ -25,11 +25,8 @@ This is an example application demonstrating how Vision API and Translation
 1. A Google Cloud Platform Account
 2. [A new Google Cloud Platform Project][7] for this lab with billing enabled
  (You can choose the region for App Engine deployment with advanced options.)
-3. Enable the Cloud Vision API and Cloud Translation API from
- [the API Manager][8]
 
 [7]: https://console.developers.google.com/project
-[8]: https://console.developers.google.com
 
 ## Do this first
 In this section you will start your [Google Cloud Shell][9] and clone the
@@ -47,8 +44,14 @@ In this section you will start your [Google Cloud Shell][9] and clone the
   ```shell
   $ gcloud config set project [PROJECT_ID]
   ```
-  
-4. Clone the lab repository in your cloud shell, then `cd` into that dir:
+
+4. Enable the Cloud Vision API and Cloud Translation API.
+
+  ```shell
+  $ gcloud services enable vision.googleapis.com translate.googleapis.com
+  ```
+
+5. Clone the lab repository in your cloud shell, then `cd` into that dir:
 
   ```shell
   $ git clone https://github.com/GoogleCloudPlatform/appengine-photoalbum-example.git
@@ -63,7 +66,7 @@ In this section you will start your [Google Cloud Shell][9] and clone the
 
 ## Customize the language used for tag names
 
-Open 'app.yaml' with a text editor and replace the language code to your
+Open `app.yaml` with a text editor and replace the language code to your
  favorite one from the [supported languages][11].
 
 You can replace the timezone code used for timestamps, too.
@@ -86,7 +89,7 @@ $ gcloud app deploy
 
 By executing these commands on the Cloud Shell, the project id is automatically
  applied to the application and the application URL will be something like:
- https://\<project id\>.appspot.com.
+ `https://\<project id\>.appspot.com`.
 
 You can see Datastore's index creation status from the Cloud Console. Once
  indexes have been created successfully, you can start using the application.
