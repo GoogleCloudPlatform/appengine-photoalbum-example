@@ -89,7 +89,7 @@ $ gcloud app deploy
 
 By executing these commands on the Cloud Shell, the project id is automatically
  applied to the application and the application URL will be something like:
- `https://\<project id\>.appspot.com`.
+ `https://<project id>.appspot.com`.
 
 You can see Datastore's index creation status from the Cloud Console. Once
  indexes have been created successfully, you can start using the application.
