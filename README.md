@@ -13,8 +13,8 @@ This is an example application demonstrating how Vision API and Translation
 - [Python][2]
 
 ## APIs
-- [Vision API][5]
-- [Translation API][6]
+- [Cloud Vision API][5]
+- [Cloud Translation API][6]
 
 [1]: https://cloud.google.com/appengine/docs
 [2]: https://python.org
